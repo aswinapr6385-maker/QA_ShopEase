@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
 import com.qa.shopease.base.BaseTest;
 import com.qa.shopease.utils.ExcelUtils;
 
-public class test extends BaseTest {
+public class login_Test extends BaseTest {
 
 	@Test(dataProvider = "loginData")
 	public void login(

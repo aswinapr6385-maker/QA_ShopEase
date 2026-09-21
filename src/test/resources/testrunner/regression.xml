@@ -11,7 +11,7 @@
     <test name="Login Tests">
 
         <classes>
-            <class name="com.qa.shopease.Test.test"/>
+            <class name="com.qa.shopease.Test.login_Test"/>
         </classes>
 
     </test>
