@@ -31,7 +31,34 @@
     <h1>Bug Analyzer &amp; RCA Report</h1>
     <p style="margin:0; opacity:0.8;">Automated Playwright CI Failure Detection &amp; Diagnostics</p>
   </div>
-  <div class="card"><p>No test failures recorded. Build passed cleanly!</p></div>
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h2 style="margin:0; font-size:20px;">[Automation Failure] UnknownTest - Test failed with unclassified error: UnknownError</h2>
+      <span class="badge badge-UNKNOWN">UNKNOWN (40%)</span>
+    </div>
+    <div class="grid">
+      <div>
+        <p><strong>Failed Test:</strong> N/A.N/A</p>
+        <p><strong>Location:</strong> N/A:-1</p>
+        <p><strong>Exception:</strong> UnknownError</p>
+        <p><strong>Severity / Priority:</strong> Major / Medium</p>
+      </div>
+      <div>
+        <p><strong>Environment:</strong> Jenkins CI</p>
+        <p><strong>Build Number:</strong> Local-Run</p>
+        <p><strong>Browser / OS:</strong> Chromium (Playwright) | Mac OS X aarch64</p>
+        <p><strong>Jenkins Build:</strong> <a href="http://localhost:8080/job/playwright-suite/1" target="_blank">View CI Log</a></p>
+      </div>
+    </div>
+    <div class="section-title">Root Cause Analysis</div>
+    <p><strong>Probable Cause:</strong> Root cause could not be deterministically determined from log slice.</p>
+    <div class="section-title">Evidence Breakdown</div>
+    <ul>
+      <li class="verified">[VERIFIED] Exception thrown: UnknownError</li>
+      <li class="verified">[VERIFIED] Error message: Test execution recorded failure in logs</li>
+      <li class="inferred">[INFERRED] Review full CI log and test artifacts for additional failure context.</li>
+    </ul>
+  </div>
 </div>
 </body>
 </html>

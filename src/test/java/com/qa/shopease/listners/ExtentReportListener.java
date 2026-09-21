@@ -39,7 +39,7 @@ public class ExtentReportListener implements ITestListener, ISuiteListener {
     @Override
     public void onStart(ISuite suite) {
 
-        String outputFolder = "target/test-output";
+        String outputFolder = "test-output";
 
         new File(outputFolder).mkdirs();
 
@@ -458,13 +458,35 @@ public class ExtentReportListener implements ITestListener, ISuiteListener {
 
     @Override
     public void onFinish(ISuite suite) {
+        // ... existing extent report flush code ...
+        
+        // AUTO-TRIGGER BUG ANALYZER IF SUITE HAD FAILURES
+        boolean hasFailures = suite.getResults().values().stream()
+                .anyMatch(r -> r.getTestContext().getFailedTests().size() > 0);
 
-        if (extent != null) {
-            extent.flush();
+        if (hasFailures) {
+            System.out.println("🚨 Failures detected in suite! Running Bug Analyzer...");
+            try {
+                // Determine log file: check surefire-reports or test-output
+                String logFile = "target/surefire-reports/testng-results.xml";
+                File f = new File(logFile);
+                if (!f.exists()) {
+                    // Fallback to test-output report
+                    logFile = "test-output/testng-results.xml";
+                }
+
+                // If XML or log exists, run the analyzer
+                ProcessBuilder pb = new ProcessBuilder(
+                    "java", "-jar", "ci-tools/bug-analyzer.jar",
+                    "--log", logFile,
+                    "--output", "reports"
+                );
+                pb.inheritIO();
+                pb.start().waitFor();
+                System.out.println("✅ Bug Analyzer report updated at reports/latest-analysis.html");
+            } catch (Exception e) {
+                System.err.println("Could not run Bug Analyzer: " + e.getMessage());
+            }
         }
-
-        testMap.clear();
-
-        attemptMap.clear();
     }
 }
