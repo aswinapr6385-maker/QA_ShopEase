@@ -1,20 +1,12 @@
 pipeline {
     agent any
 
-    environment {
-        // Safe credential injection from Jenkins Credential Store
-        JIRA_TOKEN        = credentials('jira-api-token')
-        SLACK_WEBHOOK_URL = credentials('slack-webhook-url')
-        JIRA_ENABLED      = 'true'
-        SLACK_ENABLED     = 'true'
-    }
-
     stages {
-        stage('Run Playwright Tests') {
+        stage('Run Tests') {
             steps {
                 sh '''
                     mkdir -p logs reports
-                    # Execute Playwright tests and stream logs to build.log
+                    # The test runs, and all console logs are saved to logs/build.log
                     mvn clean test -DtestFailureIgnore=true | tee logs/build.log
                 '''
             }
@@ -25,20 +17,14 @@ pipeline {
         always {
             script {
                 def logContent = readFile('logs/build.log')
-                // Check if any test failure or surefire error occurred
+                // Only trigger analysis if there were actual failures
                 if (logContent.contains("FAILURE!") || logContent.contains("BUILD FAILURE")) {
-                    echo "🚨 Playwright test failures detected. Triggering Bug Analyzer..."
-                    
-                    // Run the analyzer JAR
-                    sh '''
-                        java -jar ci-tools/bug-analyzer.jar \
-                             --log logs/build.log \
-                             --output reports
-                    '''
+                    echo "Test failure detected! Running Bug Analyzer..."
+                    sh 'java -jar ci-tools/bug-analyzer.jar --log logs/build.log --output reports'
                 }
             }
 
-            // Publish HTML RCA Dashboard in Jenkins UI
+            // Publish the HTML RCA Dashboard directly into Jenkins UI
             publishHTML(target: [
                 allowMissing: true,
                 alwaysLinkToLastBuild: true,
@@ -47,9 +33,8 @@ pipeline {
                 reportFiles: 'latest-analysis.html',
                 reportName: 'Bug Analyzer RCA Report'
             ])
-
-            // Archive the structured JSON for metrics/dashboards
-            archiveArtifacts artifacts: 'reports/latest-analysis.json, logs/**', allowEmptyArchive: true
+            
+            archiveArtifacts artifacts: 'reports/**', allowEmptyArchive: true
         }
     }
 }
