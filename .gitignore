@@ -46,4 +46,4 @@ failsafe-reports/
 # =========================
 *.tmp
 *.temp
-*.swp
+*.swpci-tools/*.jar

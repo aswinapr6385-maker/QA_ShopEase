@@ -39,7 +39,7 @@ public class ExtentReportListener implements ITestListener, ISuiteListener {
     @Override
     public void onStart(ISuite suite) {
 
-        String outputFolder = "test-output";
+        String outputFolder = "target/test-output";
 
         new File(outputFolder).mkdirs();
 
