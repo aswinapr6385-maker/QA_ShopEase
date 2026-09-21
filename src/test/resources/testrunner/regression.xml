@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<suite name="ShopEase Regression Suite">
+
+    <listeners>
+        <listener class-name="com.qa.shopease.listners.ExtentReportListener"/>
+    </listeners>
+
+    <test name="Login Tests">
+
+        <classes>
+            <class name="com.qa.shopease.Test.test"/>
+        </classes>
+
+    </test>
+
+</suite>
