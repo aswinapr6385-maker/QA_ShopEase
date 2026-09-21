@@ -11,6 +11,7 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 
 import freemarker.core.ReturnInstruction.Return;
+import com.microsoft.playwright.options.WaitUntilState;
 
 public class Playwright_factory {
 	Playwright pl;
@@ -42,7 +43,12 @@ public class Playwright_factory {
 		}
 		bc = browser.newContext();
 		page = bc.newPage();
-		page.navigate(prop.getProperty("URL").trim());
+		page.navigate(
+			    prop.getProperty("url"),
+			    new Page.NavigateOptions()
+			        .setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
+			        .setTimeout(60000)
+			);
 		return page;
 		
 
