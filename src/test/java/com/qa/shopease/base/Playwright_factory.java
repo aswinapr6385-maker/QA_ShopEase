@@ -44,7 +44,7 @@ public class Playwright_factory {
 		bc = browser.newContext();
 		page = bc.newPage();
 		page.navigate(
-			    prop.getProperty("url"),
+			    prop.getProperty("URL"),
 			    new Page.NavigateOptions()
 			        .setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
 			        .setTimeout(60000)
