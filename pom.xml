@@ -174,11 +174,15 @@
                 <version>3.5.0</version>
 
                 <configuration>
-                    <includes>
-                        <include>**/*Test.java</include>
-                        <include>**/*Tests.java</include>
-                    </includes>
-                </configuration>
+
+        <!-- Run TestNG suite -->
+        <suiteXmlFiles>
+            <suiteXmlFile>
+                src/test/resources/testrunner/regression.xml
+            </suiteXmlFile>
+        </suiteXmlFiles>
+
+    </configuration>
             </plugin>
 
         </plugins>
