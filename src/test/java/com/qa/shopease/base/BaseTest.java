@@ -7,6 +7,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
 import com.microsoft.playwright.Page;
+import com.qa.shopease.page.Register_Page;
 import com.qa.shopease.page.login_page;
 
 public class BaseTest {
@@ -15,6 +16,7 @@ public class BaseTest {
 	Properties prop;
 	public Page page;
 	protected login_page lp;
+	protected Register_Page rp;
 	
 	@BeforeMethod
 	
@@ -25,6 +27,8 @@ public class BaseTest {
 		prop = cp.int_prop();
 		page = pf.init_browser(prop);
 		lp = new login_page(page);
+		rp = new Register_Page(page);
+		
 
 	}
 	@AfterMethod
