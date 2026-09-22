@@ -29,9 +29,9 @@ public class Register_Test extends BaseTest {
             String expectedResult) {
 
         logger.info("======================================");
-        logger.info("Test Case: " + testCaseID);
-        logger.info("Scenario: " + scenario);
-        logger.info("Expected Result: " + expectedResult);
+        logger.info("Test Case ID     : " + testCaseID);
+        logger.info("Scenario         : " + scenario);
+        logger.info("Expected Result  : " + expectedResult);
         logger.info("======================================");
 
         rp.doregister(
@@ -43,26 +43,81 @@ public class Register_Test extends BaseTest {
                 phone
         );
 
-        if (expectedResult.equalsIgnoreCase("SUCCESS")) {
+        boolean registrationSuccessful = false;
+
+        try {
 
             assertThat(rp.getsucessMessage())
                     .isVisible();
 
             assertThat(rp.getsucessMessage())
                     .hasText(
-                        "Account created successfully! Please login."
+                            "Account created successfully! Please login."
                     );
 
-            logger.info("Registration successful");
+            registrationSuccessful = true;
+
+            logger.info("Actual Result: SUCCESS");
+
+        } catch (AssertionError e) {
+
+            registrationSuccessful = false;
+
+            logger.info("Actual Result: FAILURE");
+        }
+
+        if (expectedResult.equalsIgnoreCase("SUCCESS")) {
+
+            if (registrationSuccessful) {
+
+                logger.info(
+                        "RESULT: PASS - Registration succeeded as expected."
+                );
+
+            } else {
+
+                logger.severe(
+                        "RESULT: FAIL - Registration was expected to succeed, but it failed."
+                );
+
+                throw new AssertionError(
+                        "Registration was expected to SUCCESS but actual result was FAILURE."
+                );
+            }
+
+        } else if (expectedResult.equalsIgnoreCase("FAILURE")) {
+
+            if (!registrationSuccessful) {
+
+                logger.info(
+                        "RESULT: PASS - Registration failed as expected."
+                );
+
+            } else {
+
+                logger.severe(
+                        "RESULT: FAIL - Registration was expected to fail, but it succeeded."
+                );
+
+                throw new AssertionError(
+                        "Registration was expected to FAILURE but actual result was SUCCESS."
+                );
+            }
 
         } else {
 
-            logger.info(
-                "Negative/edge scenario executed: "
-                + expectedResult
+            throw new AssertionError(
+                    "Invalid expectedResult value in Excel: "
+                            + expectedResult
+                            + ". Expected SUCCESS or FAILURE."
             );
         }
+
+        logger.info("======================================");
+        logger.info("Test completed: " + testCaseID);
+        logger.info("======================================");
     }
+
     @DataProvider(name = "RegisterData")
     public Object[][] registerData() throws Exception {
 

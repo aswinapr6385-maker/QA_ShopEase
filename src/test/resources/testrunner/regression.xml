@@ -13,6 +13,18 @@
         <classes>
             <class name="com.qa.shopease.Test.login_Test"/>
         </classes>
+        
+
+
+    </test>
+    
+    <test name="register Tests">
+
+        <classes>
+            <class name="com.qa.shopease.Test.Register_Test"/>
+        </classes>
+        
+
 
     </test>
 
