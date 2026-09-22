@@ -47,3 +47,4 @@ failsafe-reports/
 *.tmp
 *.temp
 *.swpci-tools/*.jar
+ci-tools/bug-analyzer.jar
