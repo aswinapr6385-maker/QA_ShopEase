@@ -211,6 +211,12 @@
                                     tofile="${project.basedir}/test-output/TestExecutionReport/index.html"
                                     failonerror="false"
                                     overwrite="true"/>
+                                <mkdir dir="${project.basedir}/test-output/TestExecutionReport/screenshots"/>
+                                <copy todir="${project.basedir}/test-output/TestExecutionReport/screenshots"
+                                      failonerror="false"
+                                      overwrite="true">
+                                    <fileset dir="${project.basedir}/test-output/screenshots" erroronmissingdir="false"/>
+                                </copy>
                             </target>
                         </configuration>
                     </execution>
