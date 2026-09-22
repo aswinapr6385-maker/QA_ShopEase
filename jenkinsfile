@@ -6,8 +6,28 @@ pipeline {
             steps {
                 sh '''
                     mkdir -p logs reports
-                    # The test runs, and all console logs are saved to logs/build.log
-                    mvn clean test -DtestFailureIgnore=true | tee logs/build.log
+                    mvn clean test -DtestFailureIgnore=true | tee logs/build.log || true
+                '''
+            }
+        }
+
+        stage('Bug Analysis') {
+            steps {
+                sh '''
+                    # Prefer TestNG XML (richer data). Fall back to build.log if XML missing.
+                    if [ -f target/surefire-reports/testng-results.xml ]; then
+                        echo "Running Bug Analyzer on TestNG XML..."
+                        java -jar ci-tools/bug-analyzer.jar \
+                            --log target/surefire-reports/testng-results.xml \
+                            --output reports
+                    elif [ -f logs/build.log ]; then
+                        echo "Running Bug Analyzer on build.log..."
+                        java -jar ci-tools/bug-analyzer.jar \
+                            --log logs/build.log \
+                            --output reports
+                    else
+                        echo "No log file found for Bug Analyzer. Skipping."
+                    fi
                 '''
             }
         }
@@ -15,16 +35,7 @@ pipeline {
 
     post {
         always {
-            script {
-                def logContent = readFile('logs/build.log')
-                // Only trigger analysis if there were actual failures
-                if (logContent.contains("FAILURE!") || logContent.contains("BUILD FAILURE")) {
-                    echo "Test failure detected! Running Bug Analyzer..."
-                    sh 'java -jar ci-tools/bug-analyzer.jar --log logs/build.log --output reports'
-                }
-            }
-
-            // Publish the HTML RCA Dashboard directly into Jenkins UI
+            // Publish Bug Analyzer RCA Report
             publishHTML(target: [
                 allowMissing: true,
                 alwaysLinkToLastBuild: true,
@@ -33,8 +44,22 @@ pipeline {
                 reportFiles: 'latest-analysis.html',
                 reportName: 'Bug Analyzer RCA Report'
             ])
-            
-            archiveArtifacts artifacts: 'reports/**', allowEmptyArchive: true
+
+            // Publish TestNG Execution Report (file exists in test-output root)
+            publishHTML(target: [
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'test-output',
+                reportFiles: 'TestExecutionReport.html',
+                reportName: 'Test Execution Report'
+            ])
+
+            // Archive all reports
+            archiveArtifacts artifacts: 'reports/**, logs/**, test-output/*.html', allowEmptyArchive: true
+
+            // TestNG results plugin
+            testNG results: '**/testng-results.xml', unstableOnSkippedTests: false
         }
     }
 }
