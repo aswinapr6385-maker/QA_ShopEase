@@ -5,6 +5,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
@@ -21,6 +22,9 @@ import com.qa.shopease.base.RetryAnalyzer;
 
 public class ExtentReportListener implements ITestListener, ISuiteListener {
 
+    private static final Logger logger =
+            Logger.getLogger(ExtentReportListener.class.getName());
+
     private static ExtentReports extent;
 
     private static final Map<String, ExtentTest> testMap =
@@ -31,13 +35,17 @@ public class ExtentReportListener implements ITestListener, ISuiteListener {
 
     private static String screenshotPath;
 
-
     // ============================================================
     // START ENTIRE SUITE
     // ============================================================
 
     @Override
     public void onStart(ISuite suite) {
+
+        logger.info("==============================================");
+        logger.info("Starting ShopEase Regression Suite");
+        logger.info("Suite Name: " + suite.getName());
+        logger.info("==============================================");
 
         String outputFolder = "test-output";
 
@@ -49,6 +57,10 @@ public class ExtentReportListener implements ITestListener, ISuiteListener {
 
         String reportPath =
                 outputFolder + "/TestExecutionReport.html";
+
+        logger.info("Report folder: " + outputFolder);
+        logger.info("Report path: " + reportPath);
+        logger.info("Screenshot path: " + screenshotPath);
 
         ExtentSparkReporter sparkReporter =
                 new ExtentSparkReporter(reportPath);
@@ -74,8 +86,9 @@ public class ExtentReportListener implements ITestListener, ISuiteListener {
         extent.setSystemInfo(
                 "Environment",
                 "QA");
-    }
 
+        logger.info("ExtentReport initialized successfully");
+    }
 
     // ============================================================
     // TEST START
@@ -86,26 +99,41 @@ public class ExtentReportListener implements ITestListener, ISuiteListener {
 
         String testKey = getTestKey(result);
 
+        String displayName = getDisplayName(result);
+
         int attempt =
                 attemptMap.getOrDefault(testKey, 0) + 1;
 
         attemptMap.put(testKey, attempt);
+
+        logger.info("----------------------------------------------");
+        logger.info("TEST STARTED");
+        logger.info("Test: " + displayName);
+        logger.info("Test Key: " + testKey);
+        logger.info("Attempt: " + attempt);
+        logger.info("----------------------------------------------");
 
         ExtentTest test =
                 testMap.get(testKey);
 
         if (test == null) {
 
-            test = extent.createTest(
-                    getDisplayName(result));
+            test = extent.createTest(displayName);
 
             testMap.put(testKey, test);
+
+            logger.info(
+                    "Created new ExtentTest: " + displayName);
 
             test.log(
                     Status.INFO,
                     "Initial execution started.");
 
         } else {
+
+            logger.info(
+                    "Retry execution started for: "
+                    + displayName);
 
             test.log(
                     Status.WARNING,
@@ -123,7 +151,6 @@ public class ExtentReportListener implements ITestListener, ISuiteListener {
         addTestParameters(test, result);
     }
 
-
     // ============================================================
     // TEST SUCCESS
     // ============================================================
@@ -140,21 +167,37 @@ public class ExtentReportListener implements ITestListener, ISuiteListener {
         int attempt =
                 attemptMap.getOrDefault(testKey, 1);
 
-        test.log(
-                Status.PASS,
-                "Test Passed on Attempt " + attempt);
+        String displayName =
+                getDisplayName(result);
 
-        takeScreenshot(
-                result,
-                test,
-                "PASS",
-                attempt);
+        logger.info("----------------------------------------------");
+        logger.info("TEST PASSED");
+        logger.info("Test: " + displayName);
+        logger.info("Attempt: " + attempt);
+        logger.info("----------------------------------------------");
+
+        if (test != null) {
+
+            test.log(
+                    Status.PASS,
+                    "Test Passed on Attempt " + attempt);
+
+            takeScreenshot(
+                    result,
+                    test,
+                    "PASS",
+                    attempt);
+
+        } else {
+
+            logger.warning(
+                    "ExtentTest instance is NULL for passed test: "
+                    + displayName);
+        }
 
         attemptMap.remove(testKey);
-
         testMap.remove(testKey);
     }
-
 
     // ============================================================
     // TEST FAILURE
@@ -163,14 +206,38 @@ public class ExtentReportListener implements ITestListener, ISuiteListener {
     @Override
     public void onTestFailure(ITestResult result) {
 
-        String testKey = getTestKey(result);
+        String testKey =
+                getTestKey(result);
 
-        ExtentTest test = testMap.get(testKey);
+        String displayName =
+                getDisplayName(result);
 
-        // Create ExtentTest if it does not already exist
+        ExtentTest test =
+                testMap.get(testKey);
+
+        int attempt =
+                attemptMap.getOrDefault(testKey, 1);
+
+        logger.severe("----------------------------------------------");
+        logger.severe("TEST FAILED");
+        logger.severe("Test: " + displayName);
+        logger.severe("Attempt: " + attempt);
+
+        if (result.getThrowable() != null) {
+
+            logger.severe(
+                    "Failure Reason: "
+                    + result.getThrowable().getMessage());
+        }
+
+        logger.severe("----------------------------------------------");
+
         if (test == null) {
 
-            test = extent.createTest(getDisplayName(result));
+            logger.warning(
+                    "ExtentTest was NULL. Creating new ExtentTest for failed test.");
+
+            test = extent.createTest(displayName);
 
             testMap.put(testKey, test);
 
@@ -178,9 +245,6 @@ public class ExtentReportListener implements ITestListener, ISuiteListener {
                     Status.INFO,
                     "Test started without an existing ExtentTest instance.");
         }
-
-        int attempt =
-                attemptMap.getOrDefault(testKey, 1);
 
         takeScreenshot(
                 result,
@@ -190,15 +254,24 @@ public class ExtentReportListener implements ITestListener, ISuiteListener {
 
         if (attempt <= RetryAnalyzer.MAX_RETRY_COUNT) {
 
+            logger.warning(
+                    "Attempt "
+                    + attempt
+                    + " FAILED. Retry "
+                    + attempt
+                    + "/"
+                    + RetryAnalyzer.MAX_RETRY_COUNT
+                    + " will be executed.");
+
             test.log(
                     Status.WARNING,
                     "Attempt "
-                            + attempt
-                            + " FAILED. Retry "
-                            + attempt
-                            + "/"
-                            + RetryAnalyzer.MAX_RETRY_COUNT
-                            + " will be executed.");
+                    + attempt
+                    + " FAILED. Retry "
+                    + attempt
+                    + "/"
+                    + RetryAnalyzer.MAX_RETRY_COUNT
+                    + " will be executed.");
 
             if (result.getThrowable() != null) {
 
@@ -208,6 +281,10 @@ public class ExtentReportListener implements ITestListener, ISuiteListener {
             }
 
         } else {
+
+            logger.severe(
+                    "FINAL FAILURE - Maximum retries exhausted for: "
+                    + displayName);
 
             test.log(
                     Status.FAIL,
@@ -233,6 +310,14 @@ public class ExtentReportListener implements ITestListener, ISuiteListener {
         String testKey =
                 getTestKey(result);
 
+        String displayName =
+                getDisplayName(result);
+
+        logger.warning("----------------------------------------------");
+        logger.warning("TEST SKIPPED");
+        logger.warning("Test: " + displayName);
+        logger.warning("----------------------------------------------");
+
         ExtentTest test =
                 testMap.get(testKey);
 
@@ -246,13 +331,17 @@ public class ExtentReportListener implements ITestListener, ISuiteListener {
 
                 test.skip(result.getThrowable());
             }
+
+        } else {
+
+            logger.warning(
+                    "ExtentTest instance is NULL for skipped test: "
+                    + displayName);
         }
 
         attemptMap.remove(testKey);
-
         testMap.remove(testKey);
     }
-
 
     // ============================================================
     // TEST PARAMETERS
@@ -281,12 +370,14 @@ public class ExtentReportListener implements ITestListener, ISuiteListener {
                         String.valueOf(parameter));
             }
 
+            logger.info(
+                    "Test Parameters: " + data);
+
             test.log(
                     Status.INFO,
                     "Test Data: " + data);
         }
     }
-
 
     // ============================================================
     // SCREENSHOT
@@ -300,20 +391,31 @@ public class ExtentReportListener implements ITestListener, ISuiteListener {
 
         try {
 
-            Page page = getPage(result);
+            String displayName =
+                    getDisplayName(result);
+
+            logger.info(
+                    "Taking " + status
+                    + " screenshot for: "
+                    + displayName);
+
+            Page page =
+                    getPage(result);
 
             if (page == null) {
 
+                logger.warning(
+                        "Page is NULL. Screenshot cannot be captured for: "
+                        + displayName);
+
                 if (test != null) {
+
                     test.warning(
                             "Screenshot not captured because Page is null.");
                 }
 
                 return;
             }
-
-            String displayName =
-                    getDisplayName(result);
 
             String safeName =
                     displayName.replaceAll(
@@ -339,10 +441,19 @@ public class ExtentReportListener implements ITestListener, ISuiteListener {
                     + File.separator
                     + fileName;
 
+            logger.info(
+                    "Screenshot file path: "
+                    + filePath);
+
             page.screenshot(
                     new Page.ScreenshotOptions()
-                            .setPath(Paths.get(filePath))
+                            .setPath(
+                                    Paths.get(filePath))
                             .setFullPage(true));
+
+            logger.info(
+                    "Screenshot saved successfully: "
+                    + fileName);
 
             test.addScreenCaptureFromPath(
                     "screenshots/" + fileName);
@@ -350,16 +461,22 @@ public class ExtentReportListener implements ITestListener, ISuiteListener {
             test.log(
                     Status.INFO,
                     "Screenshot captured: "
-                            + fileName);
+                    + fileName);
 
         } catch (Exception e) {
 
-            test.warning(
-                    "Unable to capture screenshot: "
-                            + e.getMessage());
+            logger.severe(
+                    "Failed to capture screenshot: "
+                    + e.getMessage());
+
+            if (test != null) {
+
+                test.warning(
+                        "Unable to capture screenshot: "
+                        + e.getMessage());
+            }
         }
     }
-
 
     // ============================================================
     // GET PAGE
@@ -377,19 +494,31 @@ public class ExtentReportListener implements ITestListener, ISuiteListener {
                 BaseTest baseTest =
                         (BaseTest) instance;
 
-                return baseTest.getPage();
+                Page page =
+                        baseTest.getPage();
+
+                if (page != null) {
+
+                    logger.info(
+                            "Playwright Page retrieved successfully");
+                } else {
+
+                    logger.warning(
+                            "Playwright Page returned NULL");
+                }
+
+                return page;
             }
 
         } catch (Exception e) {
 
-            System.out.println(
+            logger.severe(
                     "Unable to get Playwright Page: "
-                            + e.getMessage());
+                    + e.getMessage());
         }
 
         return null;
     }
-
 
     // ============================================================
     // TEST KEY
@@ -407,7 +536,6 @@ public class ExtentReportListener implements ITestListener, ISuiteListener {
         return methodName
                 + Arrays.deepToString(parameters);
     }
-
 
     // ============================================================
     // DISPLAY NAME
@@ -451,42 +579,122 @@ public class ExtentReportListener implements ITestListener, ISuiteListener {
         return name.toString();
     }
 
-
     // ============================================================
     // FINISH ENTIRE SUITE
     // ============================================================
 
     @Override
     public void onFinish(ISuite suite) {
-        // ... existing extent report flush code ...
-        
+
+        logger.info("==============================================");
+        logger.info("Suite execution finished");
+        logger.info("Suite Name: " + suite.getName());
+
+        if (extent != null) {
+
+            logger.info(
+                    "Flushing Extent Report...");
+
+            extent.flush();
+
+            logger.info(
+                    "Extent Report flushed successfully");
+            logger.info(
+                    "Report location: test-output/TestExecutionReport.html");
+        }
+
+        testMap.clear();
+        attemptMap.clear();
+
+        logger.info("Extent test maps cleared");
+
+        // ========================================================
         // AUTO-TRIGGER BUG ANALYZER IF SUITE HAD FAILURES
-        boolean hasFailures = suite.getResults().values().stream()
-                .anyMatch(r -> r.getTestContext().getFailedTests().size() > 0);
+        // ========================================================
+
+        boolean hasFailures =
+                suite.getResults()
+                        .values()
+                        .stream()
+                        .anyMatch(r ->
+                                r.getTestContext()
+                                        .getFailedTests()
+                                        .size() > 0);
+
+        logger.info(
+                "Suite contains failures: " + hasFailures);
 
         if (hasFailures) {
-            System.out.println("🚨 Failures detected in suite! Running Bug Analyzer...");
+
+            logger.warning(
+                    "Failures detected in suite! Running Bug Analyzer...");
+
             try {
-                // Determine log file: check surefire-reports or test-output
-                String logFile = "target/surefire-reports/testng-results.xml";
-                File f = new File(logFile);
+
+                String logFile =
+                        "target/surefire-reports/testng-results.xml";
+
+                File f =
+                        new File(logFile);
+
                 if (!f.exists()) {
-                    // Fallback to test-output report
-                    logFile = "test-output/testng-results.xml";
+
+                    logger.info(
+                            "Primary TestNG result not found: "
+                            + logFile);
+
+                    logFile =
+                            "test-output/testng-results.xml";
+
+                    logger.info(
+                            "Using fallback TestNG result: "
+                            + logFile);
                 }
 
-                // If XML or log exists, run the analyzer
-                ProcessBuilder pb = new ProcessBuilder(
-                    "java", "-jar", "ci-tools/bug-analyzer.jar",
-                    "--log", logFile,
-                    "--output", "reports"
-                );
+                logger.info(
+                        "Bug Analyzer input: "
+                        + logFile);
+
+                ProcessBuilder pb =
+                        new ProcessBuilder(
+                                "java",
+                                "-jar",
+                                "ci-tools/bug-analyzer.jar",
+                                "--log",
+                                logFile,
+                                "--output",
+                                "reports"
+                        );
+
                 pb.inheritIO();
-                pb.start().waitFor();
-                System.out.println("✅ Bug Analyzer report updated at reports/latest-analysis.html");
+
+                logger.info(
+                        "Starting Bug Analyzer...");
+
+                Process process =
+                        pb.start();
+
+                int exitCode =
+                        process.waitFor();
+
+                logger.info(
+                        "Bug Analyzer completed with exit code: "
+                        + exitCode);
+
+                logger.info(
+                        "Bug Analyzer report updated at: "
+                        + "reports/latest-analysis.html");
+
             } catch (Exception e) {
-                System.err.println("Could not run Bug Analyzer: " + e.getMessage());
+
+                logger.severe(
+                        "Could not run Bug Analyzer: "
+                        + e.getMessage());
             }
         }
+
+        logger.info("==============================================");
+        logger.info("ShopEase Regression Suite completed");
+        logger.info("==============================================");
     }
 }

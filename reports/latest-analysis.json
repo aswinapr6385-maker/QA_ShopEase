@@ -1,5 +1,5 @@
 [ {
-  "id" : "AUTO-CD9EF7D7",
+  "id" : "AUTO-679C85BA",
   "title" : "[Automation Failure] login_Test.login - Assertion mismatch observed in com.qa.shopease.Test.login_Test.login",
   "failureSummary" : "Assertion mismatch observed in com.qa.shopease.Test.login_Test.login",
   "classification" : "ASSERTION_MISMATCH",
@@ -12,7 +12,7 @@
   "commitId" : "Not available",
   "commitAuthor" : "Not available",
   "buildStatus" : "FAILED",
-  "timestamp" : 1790090297.811969000,
+  "timestamp" : 1790098649.751670000,
   "suiteName" : "ShopEase Regression Suite",
   "testngTestName" : "Login Tests",
   "packageName" : "com.qa.shopease.Test",
